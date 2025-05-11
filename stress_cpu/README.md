@@ -28,7 +28,8 @@ sudo pacman -S bc
 
 ## 📌 Flags
 
-| Flags | Required | Description
+| Flags | Required | Description |
+|-------|----------|-------------|
 | `-c` | yes | Number of cores to stress. |
 | `-t` | yes | Duration of stress test (in seconds). |
 | `-h` | no | Show the help panel. |
