@@ -1,0 +1,22 @@
+require 'yaml'
+
+Vagrant.configure("2") do |config|
+  
+  vars = YAML.load_file("vars/vars.yml")
+
+  vars['vms'].each do |vm|
+    config.vm.define vm['host'] do |des|
+      des.vm.hostname = vm['host']
+      des.vm.box = vm['so']
+      des.vm.network "private_network", type: "dhcp"
+      if vm['tipo'] == 'windows'
+        des.vm.provision :shell, path: "scripts/connection.ps1"
+      end
+      des.vm.provider vm['provider'] do |hw|
+        hw.storage_pool_name = 'default'
+        hw.memory = vm['memory']
+        hw.cpus = vm['cpus']
+      end
+    end
+  end
+end

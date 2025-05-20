@@ -1,0 +1,16 @@
+---
+vms:
+  - tipo: "windows"
+    host: "lab1-windows"
+    memory: "2048"
+    cpus: "1"
+    so: "jborean93/WindowsServer2016"
+    provider: "libvirt"
+
+  - tipo: "Linux"
+    host: "lab1-rhel"
+    memory: "1024"
+    cpus: "1"
+    so: "almalinux/9"
+    provider: "libvirt"
+...
