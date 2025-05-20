@@ -1,0 +1,48 @@
+---
+- name: Playbook para instalar ambiente de memoria bajo estres
+  hosts: all 
+  gather_facts: false
+  vars_files:
+    - vars/main.yml
+  pre_tasks:
+
+  - name: Mem Stress | Validaciones previas 
+    include_tasks: tasks/validaciones_previas.yml
+
+  tasks:
+
+  - block:
+
+    - name: Mem Stress | Empieza compilación del programa y creación del servicio
+      include_tasks: tasks/compilacion_creacion.yml
+      when: ruta_compilador.files | length > 0
+
+    - name: Mem Stress . Error controlado | Si no se encuentra version del compilador
+      fail:
+        msg: "No se encontro la version del compilador especificada. Version: {{ version_compilador }}" 
+      when: ruta_compilador.files | length == 0
+ 
+    rescue:
+ 
+    - name: Mem Stress | Muestra mensaje con el evento fallido
+      debug:
+        msg: "El playbook fallo con lo siguiente: {{ ansible_failed_result.msg }}"
+      when: ansible_failed_result is defined
+
+    - block:
+
+      - name: Mem Stress | Valida compiladores disponibles 
+        win_find:
+          paths: "{{ dir_microsoft_net ~ '\\Framework' }}" 
+          patterns: '^v[0-9].[0-9]+.*'
+          use_regex: true
+          file_type: directory
+        register: valida_compiladores
+
+      - name: Mem Stress | Muestra compiladores disponibles
+        debug:
+          msg: |
+            {{ valida_compiladores.files | map(attribute='path') }}
+      
+      when: ruta_compilador.files | length == 0
+...

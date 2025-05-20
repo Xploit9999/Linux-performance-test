@@ -1,0 +1,52 @@
+---
+- name: Mem Stress | Valida existencia del directorio Microsoft.NET
+  win_stat:
+    path: "{{ item }}"
+  register: valida_directorios
+  ignore_unreachable: true
+  no_log: true
+  loop: 
+    - "{{ dir_microsoft_net }}"
+    - "{{ dest_dir }}"
+
+- name: Mem Stress . Error controlado | Sí no se puede establecer conexión hacia el servidor.
+  fail:
+    msg: "Ansible no puede establecer comunicación al servidor: {{ inventory_hostname }}. Por favor validar si hay conectividad!" 
+  when: 
+    - valida_directorios.unreachable is defined 
+    - valida_directorios.unreachable 
+
+- name: Mem Stress . Error controlado | Sí los directorios (Microsoft.NET y {{ dest_dir }}) no existen
+  fail:
+    msg: >-
+      {% if not carpeta_framework and not carpeta_destino %}
+      No se encontro el directorio de Microsoft.NET, (Revisar si se tiene instalado el SDK de .net), y tampoco se encontro la carpeta destino. Por favor validar su existencia o si esta bien escrito.
+      {% elif not carpeta_framework %}
+      No se encontro el directorio de Microsoft.NET, por favor instalar el SDK de .Net ya que es requerido para este playbook.
+      {% elif not carpeta_destino %}
+      Por favor validar la carpeta destino ya que no existe.
+      {% endif %}
+  when: 
+    - carpeta_framework is defined and carpeta_destino is defined
+    - not carpeta_framework or not carpeta_destino
+  vars:
+    carpeta_framework: "{{ valida_directorios.results | selectattr('item', 'equalto', dir_microsoft_net) | map(attribute='stat.exists') | join }}"
+    carpeta_destino: "{{ valida_directorios.results | selectattr('item', 'equalto', dest_dir) | map(attribute='stat.exists') | join }}"
+
+- set_fact:
+    scripts_compilar: "{{ servicios | map(attribute='script') | unique }}"
+
+- name: Mem Stress | Envia script C# al servidor remoto para compilacion
+  win_copy:
+    src: "{{ item }}"
+    dest: "{{ dest_dir }}"
+  loop: "{{ scripts_compilar }}"
+
+- name: Mem Stress | Valida ruta del compilador {{ version_compilador }}
+  win_find:
+    paths: "{{ dir_microsoft_net ~ '\\Framework' }}" 
+    patterns: "{{ '^' ~ version_compilador | lower ~ '.[0-9]+.*' }}"
+    use_regex: true
+    file_type: directory
+  register: ruta_compilador
+...

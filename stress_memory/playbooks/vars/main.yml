@@ -1,0 +1,8 @@
+---
+servicios: 
+  - {nombre: CX.Parsing.Servicio, script: scripts/memoria_stress.cs}
+  - {nombre: CX.Storage.Motor, script: scripts/servicioBasico.cs}
+  - {nombre: CXTrace.Motor, script: scripts/servicioBasico.cs}
+dest_dir: C:\Temp
+version_compilador: v4
+dir_microsoft_net: C:\Windows\Microsoft.NET

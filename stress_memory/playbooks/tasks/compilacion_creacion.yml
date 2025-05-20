@@ -1,0 +1,25 @@
+---
+- set_fact:
+    destino: >-
+      {{ dest_dir ~ '\\' if '\\' not in dest_dir | last else dest_dir }}
+
+- name: Mem Stress | Compila script
+  win_command: >-
+      {{ 
+        compilador ~ ' /t:exe /out:' ~ destino ~ (item | basename).split('.')[0]  ~ '.exe ' ~ 
+        destino ~ item | basename ~ ' ' ~ dll_servicios ~ ' /nologo'
+      }}
+  loop: "{{ scripts_compilar }}"
+  register: compilacion
+  failed_when: compilacion.rc > 1
+  vars:
+    compilador: "{{ ruta_compilador.files | map(attribute='path') | join  ~ '\\csc.exe' }}"
+    dll_servicios: "/reference:System.ServiceProcess.dll /reference:Microsoft.VisualBasic.dll"
+
+- name: Mem Stress | Crea servicio(s)
+  win_service:
+    name: "{{ item.nombre }}"
+    path: >-
+      {{ destino ~ (item.script | basename).split('.')[0] ~ '.exe' }}
+  loop: "{{ servicios }}"
+...
