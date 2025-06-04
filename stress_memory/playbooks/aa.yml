@@ -1,0 +1,53 @@
+---
+- hosts: all
+  gather_facts: false
+  vars:
+    servicios_bajada:
+      - BCI.Transformador.Servicio 
+      - SX.Core.Storage.Motor
+      - SX.Core.Trace.Motor.V2
+    servicios_subida:
+      - SX.Core.Trace.Motor.V2
+      - SX.Core.Storage.Motor
+      - BCI.Transformador.Servicio 
+  tasks:
+
+  - win_service:
+      name: "{{ item }}"
+      state: stopped
+    loop: "{{ servicios_bajada }}"
+
+  - win_service:
+      name: "{{ item }}"
+      state: started
+    loop: "{{ servicios_subida }}"
+
+  - pause:
+      seconds: 20
+
+  - name: Obtener datos de memoria
+    ansible.windows.setup:
+      gather_subset: hardware
+
+  - name: Calcular porcentaje de uso
+    set_fact:
+      porcentaje_uso: "{{ ((memoria_usada_mb|int / ansible_memtotal_mb) * 100) | round(2) }}"
+    vars:
+      memoria_usada_mb: "{{ ansible_memtotal_mb - ansible_memfree_mb }}"
+
+  - debug:
+      msg: "Memoria OK"
+    when: porcentaje_uso|int < 90
+
+  - debug:
+      msg: "Persiste el consumo de memoria"
+    when: porcentaje_uso|int >= 90
+
+  - fetch:
+      src: C:/Temp/{{ hoy }}.myproc.log
+      dest: /tmp/
+      flat: true
+    when: porcentaje_uso|int >= 90
+    vars:
+      hoy: "{{ now(fmt='%Y%m%d') }}"
+...
